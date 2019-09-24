@@ -18,12 +18,12 @@ problem_data.mu_lame = @(x, y) (E/(2*(1+nu)) * ones (size (x)));
 
 % Source and boundary terms
 % problem_data.f = @(x, y) zeros (2, size (x, 1), size (x, 2));
-problem_data.f = @(x, y) (1/1e6).*[-2*(problem_data.mu_lame(x,y).*cos(x).*sin(y)+(problem_data.mu_lame(x,y)+1e6).*cos(x+y)),-2*problem_data.mu_lame(x,y).*cos(x).*sin(y)];
+problem_data.f = @(x, y) -2*problem_data.mu_lame*(problem_data.mu_lame+10e10),-2*problem_data.mu_lame*cos(x)*sin(y));
 problem_data.g = @test_plate_with_hole_g_nmnn;
 problem_data.h = @(x, y, ind) zeros (2, size (x, 1), size (x, 2));
 
 % Physical terms of fibered material
-problem_data.Ef = 1e6;
+problem_data.Ef = 10e10;
 problem_data.a = [1; 0];
 
 % 2) CHOICE OF THE DISCRETIZATION PARAMETERS
