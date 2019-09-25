@@ -16,15 +16,16 @@ E  =  1e5; nu = .3;
 problem_data.lambda_lame = @(x, y) ((nu*E)/((1+nu)*(1-2*nu)) * ones (size (x)));
 problem_data.mu_lame = @(x, y) (E/(2*(1+nu)) * ones (size (x)));
 
+% Physical terms of fibered material
+problem_data.Ef = 1e8;
+problem_data.a = [sqrt(2)/2; sqrt(2)/2];
+
 % Source and boundary terms
-% problem_data.f = @(x, y) zeros (2, size (x, 1), size (x, 2));
-problem_data.f = @(x, y) (1/1e6).*[-2*(problem_data.mu_lame(x,y).*cos(x).*sin(y)+(problem_data.mu_lame(x,y)+1e6).*cos(x+y)),-2*problem_data.mu_lame(x,y).*cos(x).*sin(y)];
+problem_data.f = @(x, y) zeros (2, size (x, 1), size (x, 2));
 problem_data.g = @test_plate_with_hole_g_nmnn;
 problem_data.h = @(x, y, ind) zeros (2, size (x, 1), size (x, 2));
 
-% Physical terms of fibered material
-problem_data.Ef = 1e6;
-problem_data.a = [1; 0];
+
 
 % 2) CHOICE OF THE DISCRETIZATION PARAMETERS
 clear method_data
@@ -49,6 +50,8 @@ sp_to_vtk (u, space, geometry, vtk_pts, output_file, {'displacement', 'stress'},
 [eu, F] = sp_eval (u, space, geometry, vtk_pts, {'value', 'stress'}, problem_data.lambda_lame, problem_data.mu_lame);
 [X, Y]  = deal (squeeze(F(1,:,:)), squeeze(F(2,:,:)));
 
+
+
 figure
 quiver (X, Y, squeeze(eu{1}(1,:,:)), squeeze(eu{1}(2,:,:)))
 axis equal tight
@@ -58,6 +61,7 @@ figure
 surf (X, Y, squeeze(eu{2}(1,1,:,:)))
 view(2); axis equal; shading interp; colorbar;
 title ('Stress component \sigma_{xx}')
-
+xlim([-4 0])
+ylim([0 4])
 %!demo
 %! ex_plane_strain_plate
