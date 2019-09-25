@@ -18,26 +18,29 @@ function varargout = op_j4u_j4v(spu, spv, msh, a_kron_a)
     if (all (msh.jacdet(:, iel)))
       gradu_iel = reshape (gradu(:,:,:,1:spu.nsh(iel),iel), spu.ncomp, ndir, msh.nqn, spu.nsh(iel));
       epsu_iel = (gradu_iel + permute (gradu_iel, [2 1 3 4]))/2;
-      epsu_iel = reshape (epsu_iel, [spu.ncomp*ndir, msh.nqn * spu.nsh(iel)]);
+      epsu_iel = reshape (epsu_iel, [spu.ncomp*ndir, msh.nqn, 1, spu.nsh(iel)]);
 %       epsu_iel = repmat (epsu_iel, [1,1,spv.nsh(iel),1]);
       
       gradv_iel = reshape (gradv(:,:,:,1:spv.nsh(iel),iel), spv.ncomp, ndir, msh.nqn, spv.nsh(iel));
       epsv_iel = (gradv_iel + permute (gradv_iel, [2 1 3 4]))/2;
-      epsv_iel = reshape (epsv_iel, [spv.ncomp*ndir, msh.nqn * spv.nsh(iel), 1]);
+      epsv_iel = reshape (epsv_iel, [spv.ncomp*ndir, msh.nqn, spv.nsh(iel), 1]);
 %       epsv_iel = repmat (epsv_iel, [1,1,1,spu.nsh(iel)]);
 
-      a_kron_a = reshape(a_kron_a, [ndir * ndir,1])';
+      a_kron_a = reshape(a_kron_a, [1,ndir * ndir])';
+      vec = ones(1,msh.nqn);
       
-      a_kron_a_epsu = (a_kron_a * epsu_iel)';
+      a_kron_a_iel = kron(vec,a_kron_a);
+      
+      
+      a_kron_a_epsu = bsxfun (@times, a_kron_a_iel, epsu_iel);
 %       a_kron_a_epsu = reshape (a_kron_a_epsu, [spu.ncomp*ndir, msh.nqn, 1, spu.nsh(iel)]);
 
-      a_kron_a_epsv = a_kron_a * epsv_iel;
+      a_kron_a_epsv = bsxfun (@times, a_kron_a_iel, epsv_iel);
 %       a_kron_a_epsv = reshape (a_kron_a_epsv, [spv.ncomp*ndir, msh.nqn, spv.nsh(iel), 1]);
       
-      aux_val = a_kron_a_epsu * a_kron_a_epsv;
-      values = aux_val;
-%       values(ncounter+(1:spu.nsh(iel)*spv.nsh(iel))) = reshape (sum (aux_val, 2), spv.nsh(iel), spu.nsh(iel));
-      
+      aux_val = sum (bsxfun (@times, a_kron_a_epsu, a_kron_a_epsv), 1);
+      values(ncounter+(1:spu.nsh(iel)*spv.nsh(iel))) = reshape (sum (aux_val, 2), spv.nsh(iel), spu.nsh(iel));
+
       [rows_loc, cols_loc] = ndgrid (spv.connectivity(:,iel), spu.connectivity(:,iel));
       rows(ncounter+(1:spu.nsh(iel)*spv.nsh(iel))) = rows_loc;
       cols(ncounter+(1:spu.nsh(iel)*spv.nsh(iel))) = cols_loc;

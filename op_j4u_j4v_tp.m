@@ -18,6 +18,7 @@ function varargout = op_j4u_j4v_tp(space_u, space_v, msh, a, Ef)
 
   if (nargout == 1)
     varargout{1} = A;
+    
   elseif (nargout == 3)
     [rows, cols, vals] = find (A);
     varargout{1} = rows;
