@@ -17,7 +17,7 @@ problem_data.lambda_lame = @(x, y) ((nu*E)/((1+nu)*(1-2*nu)) * ones (size (x)));
 problem_data.mu_lame = @(x, y) (E/(2*(1+nu)) * ones (size (x)));
 
 % Physical terms of fibered material
-problem_data.Ef = 1e50;
+problem_data.Ef = 1e10;
 problem_data.a = [1/2; sqrt(3)/2];
 
 % Source and boundary terms
@@ -28,9 +28,11 @@ fy = @(x, y) -((problem_data.mu_lame(x,y)/2+problem_data.lambda_lame(x,y)-proble
 problem_data.f = @(x, y) cat(1, ...
                 reshape (fx (x,y), [1, size(x)]), ...
                 reshape (fy (x,y), [1, size(x)]));
-problem_data.h       = @(x, y, ind) [sin(1)*cos(y)*(ind==2)+sin(x)*(ind==3)+sin(x)*cos(1)*(ind==4);...
-    cos(-y)*(ind==1)+cos(1-y)*(ind==2)+cos(x)*(ind==3)+cos(x-1)*(ind==4)];
-
+hx = @(x, y, ind) sin(1)*cos(y)*(ind==2)+sin(x)*(ind==3)+sin(x)*cos(1)*(ind==4);
+hy = @(x, y, ind) cos(-y)*(ind==1)+cos(1-y)*(ind==2)+cos(x)*(ind==3)+cos(x-1)*(ind==4);
+problem_data.h       = @(x, y, ind) cat(1, ...
+                reshape (hx (x,y,ind), [1, size(x)]), ...
+                reshape (hy (x,y,ind), [1, size(x)]));
 % Exact solution (optional)
 uxex = @(x,y) sin(x).*cos(y);
 uyex = @(x,y) cos(x-y);
