@@ -1,4 +1,4 @@
-% EX_PLANE_STRAIN_SQUARE: solve the plane-strain problem on a square.
+% EX_PLANE_STRAIN_SQUARE: solve the strain problem on a square.
 
 % 1) PHYSICAL DATA OF THE PROBLEM
 clear problem_data
@@ -17,7 +17,7 @@ problem_data.lambda_lame = @(x, y) ((nu*E)/((1+nu)*(1-2*nu)) * ones (size (x)));
 problem_data.mu_lame = @(x, y) (E/(2*(1+nu)) * ones (size (x)));
 
 % Physical terms of fibered material
-problem_data.Ef = 0;
+problem_data.Ef = 1e5;
 problem_data.a = [1/2; sqrt(3)/2];
 
 % Source and boundary terms
