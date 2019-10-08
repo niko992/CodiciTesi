@@ -6,9 +6,9 @@ clear problem_data
 problem_data.geo_name = 'geo_ring.txt';
 
 % Type of boundary conditions for each side of the domain
-problem_data.nmnn_sides   = [1 2];
+problem_data.nmnn_sides   = [3 4];
 problem_data.press_sides  = [];
-problem_data.drchlt_sides = [3 4];
+problem_data.drchlt_sides = [1 2];
 problem_data.symm_sides   = [];
 
 % Physical parameters
@@ -17,7 +17,7 @@ problem_data.lambda_lame = @(x, y) ((nu*E)/((1+nu)*(1-2*nu)) * ones (size (x)));
 problem_data.mu_lame = @(x, y) (E/(2*(1+nu)) * ones (size (x)));
 
 % Physical terms of fibered material
-problem_data.Ef = 0;
+problem_data.Ef = 1e5;
 problem_data.a = [1/2; sqrt(3)/2];
 
 % Source and boundary terms
@@ -26,23 +26,19 @@ dmdy = @(x,y) -(1+sqrt(3))*cos(x).*sin(y) - 3*sin(x-y);
 fx = @(x, y) -(-(problem_data.lambda_lame(x,y)+problem_data.mu_lame(x,y)).*cos(x).*sin(y)-...
     2*problem_data.mu_lame(x,y).*sin(x).*cos(y)+...
     problem_data.Ef*(dmdx(x,y)+sqrt(3)*dmdy(x,y))/16);
-
 fy = @(x, y) -(-(problem_data.lambda_lame(x,y)+problem_data.mu_lame(x,y)).*sin(x).*cos(y)-...
     2*problem_data.mu_lame(x,y).*sin(x-y)+...
     problem_data.Ef*(sqrt(3)*dmdx(x,y)+3*dmdy(x,y))/16);
 problem_data.f = @(x, y) cat(1, ...
                 reshape (fx (x,y), [1, size(x)]), ...
                 reshape (fy (x,y), [1, size(x)]));
-hx = @(x, y, ind) sin(x)*(ind==3);
-hy = @(x, y, ind) sin(x)*(ind==3)+sin(-y)*(ind==4);
+hx = @(x, y, ind) sin(x).*cos(y).*(ind==1)+sin(x).*cos(y).*(ind==2);
+hy = @(x, y, ind) sin(x-y)*(ind==1)+sin(x-y)*(ind==2);
 problem_data.h       = @(x, y, ind) cat(1, ...
                 reshape (hx (x,y,ind), [1, size(x)]), ...
                 reshape (hy (x,y,ind), [1, size(x)]));
-gx = @(x, y, ind) cos(x).*cos(y)*(ind==1)+cos(x).*cos(y)*(ind==2);
-gy = @(x, y, ind) -(cos(x-y)*(ind==1)+cos(x-y)*(ind==2));
-problem_data.g       = @(x, y, ind) cat(2, ...
-                reshape (gx (x,y,ind), [1, size(x)]), ...
-                reshape (gy (x,y,ind), [1, size(x)]));
+problem_data.g       = @(x, y, ind)...
+    test_fibered_elasticity_ring_g_nmnn (x, y, ind);
 % Exact solution (optional)
 uxex = @(x,y) sin(x).*cos(y);
 uyex = @(x,y) sin(x-y);
@@ -64,7 +60,7 @@ problem_data.graduex = @(x, y) cat(1, ...
 clear method_data
 method_data.degree     = [3 3];       % Degree of the splines
 method_data.regularity = [2 2];       % Regularity of the splines
-method_data.nsub       = [9 9];       % Number of subdivisions
+method_data.nsub       = [18 18];       % Number of subdivisions
 method_data.nquad      = [4 4];       % Points for the Gaussian quadrature rule
 
 % 3) CALL TO THE SOLVER

@@ -58,7 +58,7 @@ problem_data.graduex = @(x, y) cat(1, ...
 clear method_data
 method_data.degree     = [3 3];     % Degree of the bsplines
 method_data.regularity = [2 2];     % Regularity of the splines
-method_data.nsub       = [2 2].^3;     % Number of subdivisions
+method_data.nsub       = [2 2].^5;     % Number of subdivisions
 method_data.nquad      = [4 4];     % Points for the Gaussian quadrature rule
 
 % 3) CALL TO THE SOLVER
@@ -94,6 +94,9 @@ subplot (1,2,2)
 eu2 = problem_data.uex (X, Y);
 surf(X, squeeze(eu2(1,:,:)), squeeze(eu2(2,:,:)))
 title ('Exact solution')
+
+figure
+surf (X,squeeze(eu(1,:,:)-eu2(1,:,:)), squeeze(eu(2,:,:)-eu2(2,:,:)))
 
 error_l2 = sp_l2_error (space, msh, u, problem_data.uex)
 error_h1 = sp_h1_error (space, msh, u, problem_data.uex, problem_data.graduex)
