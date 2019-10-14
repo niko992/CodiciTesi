@@ -17,7 +17,7 @@ problem_data.lambda_lame = @(x, y) ((nu*E)/((1+nu)*(1-2*nu)) * ones (size (x)));
 problem_data.mu_lame = @(x, y) (E/(2*(1+nu)) * ones (size (x)));
 
 % Physical terms of fibered material
-problem_data.Ef = 1e8;
+problem_data.Ef = 1e5;
 problem_data.a = [sqrt(2)/2; sqrt(2)/2];
 
 % Source and boundary terms
