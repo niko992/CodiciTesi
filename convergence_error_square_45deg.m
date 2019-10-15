@@ -47,16 +47,16 @@ method_data.nquad      = [4 4];     % Points for the Gaussian quadrature rule
 % 3) CALL TO THE SOLVER
 [geometry, msh, space, u] = solve_elasticity_fiber_material (problem_data, method_data);
 
-u_fine = project_into_finer_space(space, msh, msh_ref, geometry_ref, u);
+u_fine = project_into_finer_space(space, space_ref, msh, msh_ref, geometry, geometry_ref, u);
 
 error_l2(i) = sum((u_ref-u_fine).^2);
-%error_h1(i) = sp_h1_error (space, msh, u, problem_data.uex, problem_data.graduex);
+% error_h1(i) = op_gradu_gradv (space_ref, space_ref, msh_ref, u_ref-u_fine);
 end
 
 %% 
 figure
 semilogy(subdivision,error_l2)
-hold on
-semilogy(subdivision,error_h1)
-legend('error in norm L2','error in norm H1')
+% hold on
+% semilogy(subdivision,error_h1)
+% legend('error in norm L2','error in norm H1')
 title(['Convergence with degree ', num2str(method_data.degree)])
