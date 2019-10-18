@@ -10,6 +10,7 @@ py = py(2:end-1);
 u_reshaped = reshape(u_coarse, space.ncomp, space.ndof_dir(1,1), space.ndof_dir(2,2));
 geom = nrbmak(u_reshaped,c_geometry.nurbs.knots);
 geom_f = nrbkntins(geom, {setdiff(f_geometry.nurbs.knots{1},c_geometry.nurbs.knots{1}), setdiff(f_geometry.nurbs.knots{2},c_geometry.nurbs.knots{2})});
+geom_f = nrbdegelev(geom_f, [2 2]);
 u_fine = geom_f.coefs(1:2,:,:);
 u_fine = reshape(u_fine,geom_f.number(1)*geom_f.number(2)*2,1);
 end
