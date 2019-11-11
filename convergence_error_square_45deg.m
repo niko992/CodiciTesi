@@ -13,7 +13,7 @@ problem_data.drchlt_sides = [1 3];
 problem_data.symm_sides   = [];
 
 % Physical parameters
-E  =  1; nu = .4999; 
+E  =  1; nu = .3; 
 problem_data.lambda_lame = @(x, y) ((nu*E)/((1+nu)*(1-2*nu)) * ones (size (x)));
 problem_data.mu_lame = @(x, y) (E/(2*(1+nu)) * ones (size (x)));
 
