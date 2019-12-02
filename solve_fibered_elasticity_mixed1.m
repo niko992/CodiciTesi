@@ -68,7 +68,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [geometry, msh, space_u, space_lam, u] = ...
+function [geometry, msh, space_u, u] = ...
               solve_fibered_elasticity_mixed1 (problem_data, method_data)
 
 % Extract the fields from the data structures into local variables
@@ -97,20 +97,32 @@ msh        = msh_cartesian (zeta, qn, qw, geometry);
 
 % Compute the space structures
 [space_u, space_lam] = space_fibered_elasticity (geometry.nurbs.knots, nsub, degree, regularity, msh);
+ndof_lam = nsub(1)*nsub(2)*3;
+ndof_u = space_u.ndof;
 
 % Assemble the matrices
-if (msh.rdim == 2)
-  fun_one = @(x, y) ones (size(x));
-elseif (msh.rdim == 3)
-  fun_one = @(x, y, z) ones (size(x));
-end
-A = op_su_ev_tp (space_u, space_u, msh, mu_lame, lambda_lame)+op_j4u_j4v_tp(space_u, space_u, msh,a,Ef); 
-B = op_lam_ev_tp (space_lam, space_u, msh);
-C = op_lam_eta_tp (space_lam, space_lam, msh);
-% E = op_f_v_tp (space_p, msh, fun_one).';
+A = op_su_ev_tp(space_u, space_u, msh, lambda_lame, mu_lame);
+B = op_lam_ev_tp (space_lam, space_u, msh, ndof_lam);
+C = op_lam_eta_tp (space_lam, space_lam, msh, ndof_lam);
+D = op_j4lam_j4eta_tp (space_lam, space_lam, msh, Ef, a, ndof_lam);
 F = op_f_v_tp (space_u, msh, f);
 
-K = [A,B;B',-C];
+nu = size(A, 1);
+nl = size(B, 2);
+
+K = [A, B, sparse(nu, nl);
+     B', sparse(nl, nl), -C;
+    sparse(nl, nu), -C', D];
+
+n = size(K, 1);
+
+
+% Apply Dirichlet boundary conditions
+[u_drchlt, drchlt_dofs] = sp_drchlt_l2_proj (space_u, msh, h, drchlt_sides);
+u = zeros(n, 1);
+u(drchlt_dofs) = u_drchlt;
+
+rhs = -K * u;
 
 % Apply Neumann boundary conditions
 for iside = nmnn_sides
@@ -120,15 +132,27 @@ for iside = nmnn_sides
   rhs(dofs) = rhs(dofs) + op_f_v_tp (space_u.boundary(iside), msh.boundary(iside), gside);
 end
 
-% Apply Dirichlet boundary conditions
-u = zeros (space_u.ndof, 1);
-[u_drchlt, drchlt_dofs] = sp_drchlt_l2_proj (space_u, msh, h, drchlt_sides);
-u(drchlt_dofs) = u_drchlt;
+rhs(1:nu) = rhs(1:nu) + F; 
 
-int_dofs = setdiff (1:size(K,1), drchlt_dofs);
-rhs = zeros (size(K,1),1);
-rhs(int_dofs) = rhs(int_dofs) - K (int_dofs, drchlt_dofs) * u_drchlt;
 
-mat = K (int_dofs, int_dofs);
+
+% rhs_dir  = -A(int_dofs, drchlt_dofs)*u_drchlt;
+% 
+% rhs = [F(int_dofs) + rhs_dir;...
+%     zeros(ndof_lam,1);...
+%     zeros(ndof_lam,1)];
+% K = [A(int_dofs, int_dofs),B(int_dofs,:),zeros(nintdofs, ndof_lam);...
+%     B(int_dofs,:)',zeros(ndof_lam, ndof_lam),-C;...
+%     zeros(ndof_lam, nintdofs), -C', D];
+% 
+% K = [A;  B; zeros(size(A,1), ndof_lam);
+%      B';
+
+
+int_dofs = setdiff (1:n, drchlt_dofs);
+
+u(int_dofs) = K(int_dofs, int_dofs) \ rhs(int_dofs);
+
+u = u(1:nu);
 
 end

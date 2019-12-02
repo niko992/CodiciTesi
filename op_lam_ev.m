@@ -1,4 +1,4 @@
-function varargout = op_lam_ev (sp_lam, sp_u, msh, lam_connectivity)
+function varargout = op_lam_ev (sp_lam, sp_u, msh, lam_connectivity, ndof_lam)
 
   grad_u = reshape (sp_u.shape_function_gradients, sp_u.ncomp, [], msh.nqn, sp_u.nsh_max, msh.nel);
 
@@ -9,13 +9,14 @@ function varargout = op_lam_ev (sp_lam, sp_u, msh, lam_connectivity)
   lam22 = cat(1,add,add,base);
   lam = cat(2,lam11,lam12,lam12,lam22);
   lam = permute(lam,[2,1,3]);
-  lam = reshape(lam,msh.rdim,msh.ndim,msh.nqn,msh.ndim*(msh.ndim+1)/2,msh.nel);
+  lam_dim = msh.ndim*(msh.ndim+1)/2;
+  lam = reshape(lam,msh.rdim,msh.ndim,msh.nqn,lam_dim,msh.nel);
 %   lam = reshape (lam',msh.ndim,msh.ndim,length(base),3);
   ndir = size (grad_u, 2);
 % sp_lam.nsh = 3???
-  rows = zeros (msh.nel * 3 * sp_u.nsh_max, 1);
-  cols = zeros (msh.nel * 3 * sp_u.nsh_max, 1);
-  values = zeros (msh.nel * 3 * sp_u.nsh_max, 1);
+  rows = zeros (msh.nel * lam_dim * sp_u.nsh_max, 1);
+  cols = zeros (msh.nel * lam_dim * sp_u.nsh_max, 1);
+  values = zeros (msh.nel * lam_dim * sp_u.nsh_max, 1);
 
   jacdet_weights = msh.jacdet .* msh.quad_weights;
   ncounter = 0;
@@ -23,8 +24,8 @@ function varargout = op_lam_ev (sp_lam, sp_u, msh, lam_connectivity)
     if (all (msh.jacdet(:, iel)))
 %       p_iel = reshape (p(:,:,:,1:spp.nsh(iel),iel), spp.ncomp, ndir, msh.nqn, spp.nsh(iel));
 %       epsu_iel = repmat (epsu_iel, [1,1,sp_u.nsh(iel),1]);
-      lam_iel = reshape (lam(:,:,:,1:3,iel), sp_u.ncomp, ndir, msh.nqn, 3);
-      lam_iel = reshape (lam_iel, [sp_u.ncomp*ndir, msh.nqn, 3, 1]);
+      lam_iel = reshape (lam(:,:,:,1:lam_dim,iel), sp_u.ncomp, ndir, msh.nqn, lam_dim);
+      lam_iel = reshape (lam_iel, [sp_u.ncomp*ndir, msh.nqn, 1, lam_dim]);
 
       
       grad_u_iel = reshape (grad_u(:,:,:,1:sp_u.nsh(iel),iel), sp_u.ncomp, ndir, msh.nqn, sp_u.nsh(iel));
@@ -35,14 +36,14 @@ function varargout = op_lam_ev (sp_lam, sp_u, msh, lam_connectivity)
       jacdet_iel = reshape (jacdet_weights(:,iel), [1,msh.nqn,1,1]);
 
       jacdet_u = bsxfun (@times, jacdet_iel, eps_u_iel);
-      aux_val1 = prod_space(jacdet_u,lam_iel);
-
-      values(ncounter+(1:sp_u.nsh(iel)*3)) = reshape(aux_val1,sp_u.nsh(iel),3);
+%       aux_val1 = prod_space(jacdet_u,lam_iel);
+      aux_val1 = sum(bsxfun(@times,jacdet_u,lam_iel),1);
+      values(ncounter+(1:(sp_u.nsh(iel)*lam_dim))) = reshape(sum(aux_val1,2),sp_u.nsh(iel),lam_dim);
 
       [rows_loc, cols_loc] = ndgrid (sp_u.connectivity(:,iel), lam_connectivity(:,iel));
-      rows(ncounter+(1:3*sp_u.nsh(iel))) = rows_loc;
-      cols(ncounter+(1:3*sp_u.nsh(iel))) = cols_loc;
-      ncounter = ncounter + 3*sp_u.nsh(iel);
+      rows(ncounter+(1:(lam_dim*sp_u.nsh(iel)))) = rows_loc;
+      cols(ncounter+(1:(lam_dim*sp_u.nsh(iel)))) = cols_loc;
+      ncounter = ncounter + lam_dim*sp_u.nsh(iel);
     else
       warning ('geopdes:jacdet_zero_at_quad_node', 'op_p_ev: singular map in element number %d', iel)
     end
@@ -50,7 +51,7 @@ function varargout = op_lam_ev (sp_lam, sp_u, msh, lam_connectivity)
 
   if (nargout == 1 || nargout == 0)
     varargout{1} = sparse (rows(1:ncounter), cols(1:ncounter), ...
-                           values(1:ncounter), sp_u.ndof, 12);
+                           values(1:ncounter), sp_u.ndof, ndof_lam);
   elseif (nargout == 3)
     varargout{1} = rows(1:ncounter);
     varargout{2} = cols(1:ncounter);
