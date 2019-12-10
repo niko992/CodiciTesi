@@ -56,7 +56,7 @@ problem_data.graduex = @(x, y) cat(1, ...
 clear method_data
 method_data.degree     = [1 1]; % Degree of the bsplines
 method_data.regularity = [0 0]; % Regularity of the splines
-method_data.nsub       = [16 16]; % Number of subdivisions
+method_data.nsub       = [10 10]; % Number of subdivisions
 method_data.nquad      = [8 8]; % Points for the Gaussian quadrature rule
 
 
@@ -82,11 +82,7 @@ subplot (1,2,1)
 surf (X,squeeze(eu(1,:,:)), squeeze(eu(2,:,:)))
 title ('Numerical solution')
 subplot (1,2,2)
-eu2 = problem_data.uex (X, Y);
 surf(X, squeeze(eu2(1,:,:)), squeeze(eu2(2,:,:)))
 title ('Exact solution')
-
-figure
-surf (X,squeeze(abs(eu(1,:,:)-eu2(1,:,:))), squeeze(abs(eu(2,:,:)-eu2(2,:,:))))
 
 error_l2 = sp_l2_error (space, msh, u, problem_data.uex)

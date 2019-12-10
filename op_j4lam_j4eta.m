@@ -20,8 +20,8 @@ function varargout = op_j4lam_j4eta(sp_lam, sp_eta, msh, a_kron_a, lam_connectiv
       
   a_kron_a_rep = reshape(repmat(a_kron_a,[msh.nqn,msh.nel]),[ndir*ndir,msh.nqn,msh.nel]);
 
-  jacdet_weights_rep = permute(repmat(jacdet_weights,1,1,ndir*ndir),[3,1,2]);
-  a_kron_a_weights = bsxfun(@times,a_kron_a_rep,jacdet_weights_rep);
+%   jacdet_weights_rep = permute(repmat(jacdet_weights,1,1,ndir*ndir),[3,1,2]);
+%   a_kron_a_weights = bsxfun(@times,a_kron_a_rep,jacdet_weights_rep);
     
   ncounter = 0;
   for iel = 1:msh.nel
@@ -29,13 +29,16 @@ function varargout = op_j4lam_j4eta(sp_lam, sp_eta, msh, a_kron_a, lam_connectiv
 
       lam_iel = reshape (lam(:,:,:,1:lam_dim,iel), msh.ndim, ndir, msh.nqn, lam_dim);
       lam_iel = reshape (lam_iel, [msh.ndim*ndir, msh.nqn, lam_dim, 1]);
+      eta_iel = lam_iel;
       
-      a_kron_a_weights_iel = a_kron_a_weights(:,:,iel);
+%       a_kron_a_weights_iel = a_kron_a_weights(:,:,iel);
       a_kron_a_iel = a_kron_a_rep(:,:,iel);
+      jacdet_iel = reshape (jacdet_weights(:,iel), [1,msh.nqn,1,1]);
+      a_kron_a_weights_iel = bsxfun (@times, jacdet_iel, a_kron_a_iel);
 
 %       a_kron_a_weight_epsv = sum(bsxfun (@times, epsv_iel,a_kron_a_weights_iel),1);
       a_kron_a_weights_e = sum(bsxfun (@times, lam_iel, a_kron_a_weights_iel),1);
-      a_kron_a_eta = sum(bsxfun(@times, lam_iel, a_kron_a_iel));
+      a_kron_a_eta = sum(bsxfun(@times, eta_iel, a_kron_a_iel));
       a_kron_a_eta = reshape(a_kron_a_eta,size(a_kron_a_eta,1),size(a_kron_a_eta,2),1,size(a_kron_a_eta,3));
       
       aux_val = sum(bsxfun(@times,a_kron_a_weights_e, a_kron_a_eta),1);

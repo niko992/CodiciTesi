@@ -7,10 +7,10 @@ clear problem_data
 problem_data.geo_name = nrb4surf([0 0], [1 0], [0 1], [1 1]);
 
 % Type of boundary conditions
-problem_data.nmnn_sides   = [2 4];
+problem_data.nmnn_sides   = [];
 problem_data.press_sides  = [];
-problem_data.drchlt_sides = [1 3];
-problem_data.symm_sides   = [];
+problem_data.drchlt_sides = [];
+problem_data.symm_sides   = [1 3];
 
 % Physical parameters
 E  =  1; nu = .3; 
@@ -18,7 +18,7 @@ problem_data.lambda_lame = @(x, y) ((nu*E)/((1+nu)*(1-2*nu)) * ones (size (x)));
 problem_data.mu_lame = @(x, y) (E/(2*(1+nu)) * ones (size (x)));
 
 % Physical terms of fibered material
-problem_data.Ef = 1e10;
+problem_data.Ef = 1e5;
 problem_data.a = [sqrt(2)/2; sqrt(2)/2];
 
 % Source and boundary terms
@@ -71,7 +71,7 @@ method_data.nsub       = [2 2].^subdivision(i);     % Number of subdivisions
 method_data.nquad      = [4 4];     % Points for the Gaussian quadrature rule
 
 % 3) CALL TO THE SOLVER
-[geometry, msh, space, u] = solve_elasticity_fiber_material (problem_data, method_data);
+[geometry, msh, space, u] = solve_fibered_elasticity_mixed1 (problem_data, method_data);
 
 u_fine = project_into_finer_space(space, space_ref, msh, msh_ref, geometry, geometry_ref, u);
 

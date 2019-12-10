@@ -84,11 +84,9 @@ end
 % load geometry
 geometry = geo_load (geo_name);
 % degelev  = max (degree - (geometry.nurbs.order-1), 0);
-% nurbs    = nrbdegelev (geometry.nurbs, degelev_u);
+% nurbs    = nrbdegelev (geometry.nurbs, degelev);
 [~, zeta] = kntrefine (geometry.nurbs.knots, nsub-1, degree, regularity);
-% 
-% nurbs    = nrbkntins (nurbs, nknots);
-% geometry = geo_load (nurbs);
+%
 
 % Compute the mesh structure using the finest mesh
 rule       = msh_gauss_nodes (nquad);
@@ -116,6 +114,29 @@ K = [A, B, sparse(nu, nl);
 
 n = size(K, 1);
 
+% Apply symmetry conditions
+u = zeros (space_u.ndof, 1);
+symm_dofs = [];
+for iside = symm_sides
+  msh_side = msh_eval_boundary_side (msh, iside);
+  for idim = 1:msh.rdim
+    normal_comp(idim,:) = reshape (msh_side.normal(idim,:,:), 1, msh_side.nqn*msh_side.nel);
+  end
+
+  parallel_to_axes = false;
+  for ind = 1:msh.rdim
+    ind2 = setdiff (1:msh.rdim, ind);
+    if (all (all (abs (normal_comp(ind2,:)) < 1e-10)))
+      symm_dofs = union (symm_dofs, space_u.boundary(iside).comp_dofs{ind});
+      parallel_to_axes = true;
+      break
+    end
+  end
+  if (~parallel_to_axes)
+    error ('solve_linear_elasticity: We have only implemented the symmetry condition for boundaries parallel to the axes')
+  end
+
+end
 
 % Apply Dirichlet boundary conditions
 [u_drchlt, drchlt_dofs] = sp_drchlt_l2_proj (space_u, msh, h, drchlt_sides);
@@ -129,7 +150,8 @@ for iside = nmnn_sides
 % Restrict the function handle to the specified side, in any dimension, gside = @(x,y) g(x,y,iside)
   gside = @(varargin) g(varargin{:},iside);
   dofs = space_u.boundary(iside).dofs;
-  rhs(dofs) = rhs(dofs) + op_f_v_tp (space_u.boundary(iside), msh.boundary(iside), gside);
+  rhs(dofs) = rhs(dofs) +...
+      op_f_v_tp (space_u.boundary(iside), msh.boundary(iside), gside);
 end
 
 rhs(1:nu) = rhs(1:nu) + F; 
@@ -149,7 +171,7 @@ rhs(1:nu) = rhs(1:nu) + F;
 %      B';
 
 
-int_dofs = setdiff (1:n, drchlt_dofs);
+int_dofs = setdiff (1:n, [drchlt_dofs;symm_dofs]);
 
 u(int_dofs) = K(int_dofs, int_dofs) \ rhs(int_dofs);
 
