@@ -1,4 +1,5 @@
-% EX_FIBERED_ELASTICITY_MIXED1_SQUARE: solve the fibered elasticity problem with the mixed form1.
+% EX_FIBERED_ELASTICITY_MIXED1_SQUARE: solve the fibered elasticity problem 
+% with fibers positioned at 60 degrees.
 clear;
 clc;
 % 1) PHYSICAL DATA OF THE PROBLEM
@@ -37,7 +38,6 @@ hy = @(x, y, ind) sin(-y)*(ind==1)+sin(x)*(ind==3);
 problem_data.h       = @(x, y, ind) cat(1, ...
                 reshape (hx (x,y,ind), [1, size(x)]), ...
                 reshape (hy (x,y,ind), [1, size(x)]));
-problem_data.g       = @(x, y, ind) test_fibered_elasticity_square_60_nmnn (x, y, ind);
 % Exact solution (optional)
 uxex = @(x,y) sin(x).*cos(y);
 uyex = @(x,y) sin(x-y);
@@ -54,6 +54,9 @@ problem_data.graduex = @(x, y) cat(1, ...
                 reshape (graduex21 (x,y), [1, size(x)]),...
                 reshape (graduex12 (x,y), [1, size(x)]), ...
                 reshape (graduex22 (x,y), [1, size(x)]));
+
+problem_data.g       = @(x, y, ind) test_fibered_elasticity_square_60_nmnn (x, y, ind, problem_data.graduex, problem_data.a, problem_data.lambda_lame, problem_data.mu_lame,problem_data.Ef);
+
 % 2) CHOICE OF THE DISCRETIZATION PARAMETERS
 clear method_data
 method_data.degree     = [1 1]; % Degree of the bsplines
