@@ -1,6 +1,6 @@
 % EX_PLANE_STRAIN_SQUARE: solve the plane-strain problem on a square.
-clear
-clc
+% clear
+% clc
 % 1) PHYSICAL DATA OF THE PROBLEM
 clear problem_data
 % Physical domain, defined as NURBS map given in a text file
@@ -13,12 +13,12 @@ problem_data.drchlt_sides = [1 3];
 problem_data.symm_sides   = [];
 
 % Physical parameters
-E  =  1; nu = .3; 
+E  =  1; nu = .499999; 
 problem_data.lambda_lame = @(x, y) ((nu*E)/((1+nu)*(1-2*nu)) * ones (size (x)));
 problem_data.mu_lame = @(x, y) (E/(2*(1+nu)) * ones (size (x)));
 
 % Physical terms of fibered material
-problem_data.Ef = 1e10;
+problem_data.Ef = 1e5;
 problem_data.a = [sqrt(2)/2; sqrt(2)/2];
 
 % Source and boundary terms
@@ -71,19 +71,22 @@ method_data.nsub       = [2 2].^subdivision(i);     % Number of subdivisions
 method_data.nquad      = [4 4];     % Points for the Gaussian quadrature rule
 
 % 3) CALL TO THE SOLVER
-[geometry, msh, space, u] = solve_elasticity_fiber_material (problem_data, method_data);
-
-u_fine = project_into_finer_space(space, space_ref, msh, msh_ref, geometry, geometry_ref, u);
+[geometry, msh, space, u] = solve_fibered_elasticity_mixed2 (problem_data, method_data);
 
 % error_l2(i) = sp_l2_error(space_ref,msh_ref,u_ref-u_fine,problem_data.u_ex);
-[error_h1(i),error_l2(i)] = sp_h1_error (space_ref, msh_ref, (u_ref-u_fine).^2, uex, graduex);
-[norm_h1(i),norm_l2(i)] = sp_h1_error (space_ref, msh_ref, u_ref, uex, graduex);
+%[error_h1(i),error_l2(i)] = sp_h1_error (space_ref, msh_ref, (u_ref-u_fine), uex, graduex);
+%[norm_h1(i),norm_l2(i)] = sp_h1_error (space_ref, msh_ref, u_ref, uex, graduex);
+[error_h1(i),error_l2(i)] = sp_h1_error_refined (space, space_ref, msh_ref, u, u_ref);
 end
 
 %% 
 figure
-semilogy(subdivision,error_l2./norm_l2)
+
+loglog(1./2.^subdivision,error_l2)
 hold on
-semilogy(subdivision,error_h1)
+loglog(1./2.^subdivision,error_h1)
 legend('error in norm L2','error in norm H1')
 title(['Convergence with degree ', num2str(method_data.degree)])
+
+fprintf('Convergence rate of the error in the L2 norm: %f\n', (log(error_l2(end)) - log(error_l2(1))) / (log(2^(-subdivision(end))) - log(2^(-subdivision(1)))));
+fprintf('Convergence rate of the error in the H1 norm: %f\n', (log(error_h1(end)) - log(error_h1(1))) / (log(2^(-subdivision(end))) - log(2^(-subdivision(1)))));
