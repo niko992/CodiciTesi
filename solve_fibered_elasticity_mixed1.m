@@ -1,13 +1,10 @@
-%   TO BE MODIFIED
-
-
 % SOLVE_FIBERED_ELASTICITY_MIXED1: Solve the fibered elasticity problem with a mixed formulation, and a B-spline discretization.
 %
 % Example to solve the problem
 %
 %    \int \psi(u,e) + \int \lambda:(\epsilon(u)-e) = f  in Omega = F((0,1)^n)
-%                   gradu x n = g                       on Gamma_N
-%                       u x n = h                       on Gamma_D
+%                   sigma_an(u) x n = g                       on Gamma_N
+%                                 u = h                       on Gamma_D
 %
 % with the variational mixed formulation and dividing \psi in deviatoric,
 % anisotropic and volumetric parts
@@ -32,8 +29,8 @@
 %    - f:            source term
 %    - h:            function for Dirichlet boundary condition
 %    - g:            function for Neumann condition (if nmnn_sides is not empty)
-%    - Ef:
-%    - a:
+%    - Ef:           inextensibility coefficient of the fibers
+%    - a:            direction of the fibers
 %
 %  method_data : a structure with discretization data. Its fields are:
 %    - degree:     degree of the spline functions.
@@ -46,27 +43,9 @@
 %
 %  geometry: geometry structure (see geo_load)
 %  msh:      mesh object that defines the quadrature rule (see msh_cartesian)
-%  space:    space object that defines the discrete functions (see sp_vector)
-%  sp_mul:   space object for the multiplier (see sp_scalar)
-%  eigv:     the computed eigenvalues
-%  eigf:     degrees of freedom of the associated eigenfunctions
-%
-% See also EX_MAXWELL_EIG_MIXED1_SQUARE for an example
-%
-% Copyright (C) 2010, 2011, 2015 Rafael Vazquez
-%
-%    This program is free software: you can redistribute it and/or modify
-%    it under the terms of the GNU General Public License as published by
-%    the Free Software Foundation, either version 3 of the License, or
-%    (at your option) any later version.
+%  space_u:  space object that defines the discrete functions (see sp_vector)
+%  u:        displacement computed with the mixed formulation
 
-%    This program is distributed in the hope that it will be useful,
-%    but WITHOUT ANY WARRANTY; without even the implied warranty of
-%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%    GNU General Public License for more details.
-%
-%    You should have received a copy of the GNU General Public License
-%    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 function [geometry, msh, space_u, u] = ...
               solve_fibered_elasticity_mixed1 (problem_data, method_data)
@@ -155,21 +134,6 @@ for iside = nmnn_sides
 end
 
 rhs(1:nu) = rhs(1:nu) + F; 
-
-
-
-% rhs_dir  = -A(int_dofs, drchlt_dofs)*u_drchlt;
-% 
-% rhs = [F(int_dofs) + rhs_dir;...
-%     zeros(ndof_lam,1);...
-%     zeros(ndof_lam,1)];
-% K = [A(int_dofs, int_dofs),B(int_dofs,:),zeros(nintdofs, ndof_lam);...
-%     B(int_dofs,:)',zeros(ndof_lam, ndof_lam),-C;...
-%     zeros(ndof_lam, nintdofs), -C', D];
-% 
-% K = [A;  B; zeros(size(A,1), ndof_lam);
-%      B';
-
 
 int_dofs = setdiff (1:n, [drchlt_dofs;symm_dofs]);
 

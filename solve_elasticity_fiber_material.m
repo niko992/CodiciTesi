@@ -50,24 +50,6 @@
 %  msh:      mesh object that defines the quadrature rule (see msh_cartesian)
 %  space:    space object that defines the discrete basis functions (see sp_vector)
 %  u:        the computed degrees of freedom
-%
-% See also EX_LIN_ELAST_HORSESHOE for an example.
-%
-% Copyright (C) 2010 Carlo de Falco
-% Copyright (C) 2011, 2015 Rafael Vazquez
-%
-%    This program is free software: you can redistribute it and/or modify
-%    it under the terms of the GNU General Public License as published by
-%    the Free Software Foundation, either version 3 of the License, or
-%    (at your option) any later version.
-
-%    This program is distributed in the hope that it will be useful,
-%    but WITHOUT ANY WARRANTY; without even the implied warranty of
-%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%    GNU General Public License for more details.
-%
-%    You should have received a copy of the GNU General Public License
-%    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 function [geometry, msh, sp, u] = ...
               solve_elasticity_fiber_material (problem_data, method_data)
@@ -157,7 +139,7 @@ u = zeros (sp.ndof, 1);
 [u_drchlt, drchlt_dofs] = sp_drchlt_l2_proj (sp, msh, h, drchlt_sides);
 u(drchlt_dofs) = u_drchlt;
 
-int_dofs = setdiff (1:sp.ndof, [drchlt_dofs, symm_dofs]);
+int_dofs = setdiff (1:sp.ndof, [drchlt_dofs; symm_dofs]);
 rhs(int_dofs) = rhs(int_dofs) - mat (int_dofs, drchlt_dofs) * u_drchlt;
 
 % Solve the linear system
