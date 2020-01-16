@@ -6,9 +6,9 @@ clear problem_data
 problem_data.geo_name = nrb4surf([0 0], [1 0], [0 1], [1 1]);
 
 % Type of boundary conditions
-problem_data.nmnn_sides   = [];
+problem_data.nmnn_sides   = [4];
 problem_data.press_sides  = [];
-problem_data.drchlt_sides = [1 2 3 4];
+problem_data.drchlt_sides = [1 2 3];
 problem_data.symm_sides   = [];
 
 % Physical parameters
@@ -37,6 +37,7 @@ hy = @(x, y, ind) sin(-y)*(ind==1)+sin(1-y)*(ind==2)+sin(x)*(ind==3)+sin(x-1)*(i
 problem_data.h       = @(x, y, ind) cat(1, ...
                 reshape (hx (x,y,ind), [1, size(x)]), ...
                 reshape (hy (x,y,ind), [1, size(x)]));
+            
 % Exact solution (optional)
 uxex = @(x,y) sin(x).*cos(y);
 uyex = @(x,y) sin(x-y);
@@ -45,14 +46,17 @@ problem_data.uex = @(x, y) cat(1, ...
                 reshape (uyex (x,y), [1, size(x)]));
 % Gradient of the exact solution (optional)
 graduex11 = @(x,y) cos(x).*cos(y);
-graduex21 = @(x,y) -sin(x).*sin(y);
-graduex12 = @(x,y) cos(x - y);
+graduex12 = @(x,y) -sin(x).*sin(y);
+graduex21 = @(x,y) cos(x - y);
 graduex22 = @(x,y) -cos(x - y);
 problem_data.graduex = @(x, y) cat(1, ...
                 reshape (graduex11 (x,y), [1, size(x)]), ...
-                reshape (graduex12 (x,y), [1, size(x)]),...
-                reshape (graduex21 (x,y), [1, size(x)]), ...
+                reshape (graduex21 (x,y), [1, size(x)]),...
+                reshape (graduex12 (x,y), [1, size(x)]), ...
                 reshape (graduex22 (x,y), [1, size(x)]));
+            
+problem_data.g = @(x, y, ind) test_fibered_elasticity_square_60_nmnn(x, y, ind, problem_data.graduex, problem_data.a, problem_data.lambda_lame, problem_data.mu_lame,problem_data.Ef);
+           
 subdivision = [3,4,5,6,7];
 for i = 1:length(subdivision)
 % 2) CHOICE OF THE DISCRETIZATION PARAMETERS
@@ -63,7 +67,8 @@ method_data.nsub       = [2 2].^subdivision(i);     % Number of subdivisions
 method_data.nquad      = [4 4];     % Points for the Gaussian quadrature rule
 
 % 3) CALL TO THE SOLVER
-[geometry, msh, space, u] = solve_elasticity_fiber_material (problem_data, method_data);
+% [geometry, msh, space, u] = solve_fibered_elasticity_mixed1 (problem_data, method_data);
+[geometry, msh, space, u] = solve_fibered_elasticity_mixed1 (problem_data, method_data);
 
 
 
@@ -73,8 +78,11 @@ end
 
 %% 
 figure
-semilogy(subdivision,error_l2)
+loglog(1./2.^subdivision,error_l2)
 hold on
-semilogy(subdivision,error_h1)
+loglog(1./2.^subdivision,error_h1)
 legend('error in norm L2','error in norm H1')
-title(['Convergence with degree ', num2str(method_data.degree)])
+title(['Convergence P1'])
+
+fprintf('Convergence rate of the error in the L2 norm: %f\n', (log(error_l2(end)) - log(error_l2(1))) / (log(2^(-subdivision(end))) - log(2^(-subdivision(1)))));
+fprintf('Convergence rate of the error in the H1 norm: %f\n', (log(error_h1(end)) - log(error_h1(1))) / (log(2^(-subdivision(end))) - log(2^(-subdivision(1)))));
